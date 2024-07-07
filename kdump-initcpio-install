@@ -1,0 +1,12 @@
+build() {
+    add_binary /usr/bin/date
+    add_binary /usr/bin/sync
+    add_binary /usr/bin/makedumpfile
+    add_runscript
+}
+
+help() {
+    cat  <<HELPEOF
+Hook to create kdump from initramfs
+HELPEOF
+}

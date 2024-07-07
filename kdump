@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+set -e
+set -x
+
+die() {
+    echo "$@" >&2
+    exit 1
+}
+
+if [ "$EUID" -gt 0 ]; then
+    die "This script can be run only from root"
+fi
+
+grub_setup_params() {
+    if [ ! -e /boot/grub/grub.cfg ]; then
+        die "GRUB doesn't seem to be installed? Please set crashkernel=128M manually."
+    fi
+
+    echo "Setting up kernel parameters for GRUB..."
+
+    grub_cmdline="GRUB_CMDLINE_LINUX_DEFAULT"
+    echo "$grub_cmdline=\"\$$grub_cmdline crashkernel=128M\"" >/etc/grub.d/00-kdump
+    chmod +x /etc/grub.d/00-kdump
+
+    if grub-mkconfig -o /boot/grub/grub.cfg 1>/dev/null; then
+        die "Failed to update grub config"
+    fi
+}
+
+rebind_boot_setup_params() {
+    if [ ! -e /boot/refind_linux.conf ]; then
+        die "rEFInd doesn't seem to be installed? Please set crashkernel=128M manually."
+    fi
+
+    echo "rEFInd bootloader detected"
+
+    # Ugly way to do it, but should work...
+    sed -i "0,/\"$/{s// crashkernel=128M\"/}" /boot/refind_linux.conf
+}
+
+systemd_boot_setup_params() {
+    if ! command -v sdboot-manage 2>/dev/null; then
+        die "systemd-boot-manager is not installed. Please set crashkernel=128M manually."
+    fi
+
+    echo "systemd-boot bootloader detected"
+    echo "APPENDED_LINUX_OPTIONS=\"crashkernel=128M\"" >/etc/sdboot-manage.conf.d/10-kdump.conf
+
+    sdboot-manage update
+}
+
+try_to_detect_bootloader() {
+    bootloader_type="$(($(</proc/sys/kernel/bootloader_type) >> 4))"
+
+    case "$bootloader_type" in
+    $((0x07))) # GRUB
+        grub_setup_params
+        ;;
+    $((0x02))) # EFIstub based bootloader
+        if bootctl is-installed &>/dev/null; then
+            systemd_boot_setup_params
+        else
+            # Assume that refind is used if systemd-boot is not installed
+            rebind_boot_setup_params
+        fi
+        ;;
+    *)
+        die "Unknown type of bootloader. Please set crashkernel=128M manually."
+        ;;
+    esac
+
+    echo "The parameter setup is complete, please restart the system."
+}
+
+cleanup_files() {
+    if [ -e /etc/grub.d/00-kdump ]; then
+        rm -f /etc/grub.d/00-kdump &&
+            echo "The config for GRUB has been cleaned"
+    fi
+
+    if [ -e /etc/sdboot-manage.conf.d/10-kdump.conf ]; then
+        rm -f /etc/sdboot-manage.conf.d/10-kdump.conf &&
+            echo "The config for systemd-boot has been cleaned"
+    fi
+
+    if [ -e /boot/refind_linux.conf ]; then
+        sed -i "s/crashkernel=128M//" /boot/refind_linux.conf &&
+            echo "The config for rEFInd has been cleaned"
+    fi
+}
+
+load_kexec() {
+    kernelname="$(grep -Po 'initrd=\\\initramfs-\K([A-Za-z-0-9]+)' /proc/cmdline)"
+    vmlinux="/boot/vmlinuz-${kernelname}"
+    initramfs="/boot/initramfs-${kernelname}.img"
+
+    if [ ! -e "$vmlinux" ]; then
+        die "vmlinuz for current kernel not found. Do you have /boot unmounted?"
+    fi
+
+    if [ ! -e "$initramfs" ]; then
+        die "initramfs for current kernel not found. Do you have /boot unmounted?"
+    fi
+
+    # We assume that if the current kernel has reached the stage of booting
+    # systemd and the kdump service, it should be suitable for creating dumps
+    # inside initramfs and will not cause panic at boot time.
+    if kexec -p "$vmlinux" --initrd="$initramfs" \
+        --reset-vga --console-vga --reuse-cmdline \
+        --append="fsck.mode=force fsck.repair=yes nr_cpus=1 irqpoll reset_devices"; then
+        echo "The fallback kernel has been successfully loaded"
+        kexec -p -u
+    else
+        die "Failed to load a fallback kernel using kexec"
+    fi
+}
+
+usage() {
+    cat <<EOF
+${0##*/} <ACTION>
+Utility for quick kdump configuration
+
+Options:
+    setup     Attempt to automatically set the crashkernel parameter
+    load      Load a fallback kernel for panic via kexec
+    clean     Clear config files created by setup
+EOF
+}
+
+case "$1" in
+    setup)
+        try_to_detect_bootloader
+        ;;
+    load)
+        load_kexec
+        ;;
+    cleanup)
+        cleanup_files
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+exit 0

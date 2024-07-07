@@ -1,0 +1,11 @@
+[Unit]
+Description=Loads the fallback kernel to create dumps
+After=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/bin/kdump load
+
+[Install]
+WantedBy=multi-user.target

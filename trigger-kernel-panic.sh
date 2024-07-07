@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+if [ "$EUID" -gt 0 ]; then
+    echo "This script can be run only from root"
+    exit 1
+fi
+
+echo "Running this script can damage your filesystem!"
+echo "Please close all applications before running it."
+read -rp "Do you really want to trigger a kernel panic? [Y]es/[N]o: " choice
+
+if [[ ! "$choice" =~ [Yy]es ]]; then
+    exit 0
+fi
+
+# Flush data to disks before trigger a kernel panic
+sync
+
+echo 1 > /proc/sys/kernel/sysrq
+echo c > /proc/sysrq-trigger

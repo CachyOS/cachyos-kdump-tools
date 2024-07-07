@@ -1,0 +1,9 @@
+run_latehook() {
+    if [ -e /proc/vmcore ]; then
+        makedumpfile -l -d 31 /proc/vmcore "/new_root/var/crash/crashdump-$(date +'%F-%T')"
+        makedumpfile --dump-dmesg /proc/vmcore "/new_root/var/crash/crashdump-$(date +'%F-%T').log"
+        sync
+        sleep 1
+        umount /new_root && reboot -f
+    fi
+}
