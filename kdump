@@ -26,7 +26,7 @@ grub_setup_params() {
     fi
 }
 
-rebind_boot_setup_params() {
+rebind_setup_params() {
     if [ ! -e /boot/refind_linux.conf ]; then
         die "rEFInd doesn't seem to be installed? Please set crashkernel=128M manually."
     fi
@@ -52,20 +52,20 @@ try_to_detect_bootloader() {
     bootloader_type="$(($(</proc/sys/kernel/bootloader_type) >> 4))"
 
     case "$bootloader_type" in
-    $((0x07))) # GRUB
-        grub_setup_params
-        ;;
-    $((0x02))) # EFIstub based bootloader
-        if bootctl is-installed &>/dev/null; then
-            systemd_boot_setup_params
-        else
-            # Assume that refind is used if systemd-boot is not installed
-            rebind_boot_setup_params
-        fi
-        ;;
-    *)
-        die "Unknown type of bootloader. Please set crashkernel=128M manually."
-        ;;
+        $((0x07))) # GRUB
+            grub_setup_params
+            ;;
+        $((0x02))) # EFIstub based bootloader
+            if bootctl is-installed &>/dev/null; then
+                systemd_boot_setup_params
+            else
+                # Assume that refind is used if systemd-boot is not installed
+                rebind_setup_params
+            fi
+            ;;
+        *)
+            die "Unknown type of bootloader. Please set crashkernel=128M manually."
+            ;;
     esac
 
     echo "The parameter setup is complete, please restart the system."
@@ -89,6 +89,14 @@ cleanup_files() {
 }
 
 load_kexec() {
+    crashkernel="$(cat /sys/kernel/kexec_crash_size)"
+
+    if [ ! "$crashkernel" -gt 0 ]; then
+        echo "The crashkernel parameter is not set." >&2
+        echo "Please run kdump setup or add crashkernel=128M parameter manually." >&2
+        exit 1
+    fi
+
     kernelname="$(grep -Po 'initrd=\\\initramfs-\K([A-Za-z-0-9]+)' /proc/cmdline)"
     vmlinux="/boot/vmlinuz-${kernelname}"
     initramfs="/boot/initramfs-${kernelname}.img"
@@ -106,7 +114,8 @@ load_kexec() {
     # inside initramfs and will not cause panic at boot time.
     if kexec -p "$vmlinux" --initrd="$initramfs" \
         --reset-vga --console-vga --reuse-cmdline \
-        --append="fsck.mode=force fsck.repair=yes nr_cpus=1 irqpoll reset_devices"; then
+        --append="fsck.mode=force fsck.repair=yes nr_cpus=1 irqpoll reset_devices"
+    then
         echo "The fallback kernel has been successfully loaded"
         kexec -p -u
     else
