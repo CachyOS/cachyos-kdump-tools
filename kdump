@@ -117,9 +117,18 @@ load_kexec() {
         --append="fsck.mode=force fsck.repair=yes nr_cpus=1 irqpoll reset_devices"
     then
         echo "The fallback kernel has been successfully loaded"
-        kexec -p -u
     else
         die "Failed to load a fallback kernel using kexec"
+    fi
+}
+
+unload_kexec() {
+    current_state="$(cat /sys/kernel/kexec_crash_loaded)"
+    if [ "$current_state" -gt 0 ]; then
+        kexec -p -u
+        echo "The fallback kernel was successfully unloaded from memory."
+    else
+        echo "The fallback kernel was not loaded, nothing to do"
     fi
 }
 
@@ -131,6 +140,7 @@ Utility for quick kdump configuration
 Options:
     setup     Attempt to automatically set the crashkernel parameter
     load      Load a fallback kernel for panic via kexec
+    unload    Unload fallback kernel from reserved area in memory
     clean     Clear config files created by setup
 EOF
 }
@@ -141,6 +151,9 @@ case "$1" in
         ;;
     load)
         load_kexec
+        ;;
+    unload)
+        unload_kexec
         ;;
     cleanup)
         cleanup_files

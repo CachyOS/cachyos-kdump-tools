@@ -1,11 +1,13 @@
 [Unit]
 Description=Loads the fallback kernel to create dumps
 After=local-fs.target
+ConditionKernelCommandLine=crashkernel
 
 [Service]
 Type=oneshot
 RemainAfterExit=true
 ExecStart=/usr/bin/kdump load
+ExecStop=/usr/bin/kdump unload
 
 [Install]
 WantedBy=multi-user.target
