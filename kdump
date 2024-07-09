@@ -109,6 +109,10 @@ load_kexec() {
         die "initramfs for current kernel not found. Do you have /boot unmounted?"
     fi
 
+    if [ ! -e /var/crash ]; then
+        mkdir -p /var/crash
+    fi
+
     # We assume that if the current kernel has reached the stage of booting
     # systemd and the kdump service, it should be suitable for creating dumps
     # inside initramfs and will not cause panic at boot time.
