@@ -97,7 +97,7 @@ load_kexec() {
         exit 1
     fi
 
-    kernelname="$(grep -Po 'initrd=\\\initramfs-\K([A-Za-z-0-9]+)' /proc/cmdline)"
+    kernelname="$(grep -Po 'initrd=\\initramfs-\K([A-Za-z-0-9]+)' /proc/cmdline)"
     vmlinux="/boot/vmlinuz-${kernelname}"
     initramfs="/boot/initramfs-${kernelname}.img"
 
