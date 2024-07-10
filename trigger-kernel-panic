@@ -8,7 +8,8 @@ echo "Running this script can damage your filesystem!"
 echo "Please close all applications before running it."
 read -rp "Do you really want to trigger a kernel panic? [Y]es/[N]o: " choice
 
-if [[ ! "$choice" =~ [Yy]es ]]; then
+shopt -s extglob
+if [[ ! "$choice" == [Yy]?(e)?(s) ]]; then
     exit 0
 fi
 
