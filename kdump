@@ -18,7 +18,7 @@ grub_setup_params() {
     echo "Setting up kernel parameters for GRUB..."
 
     grub_cmdline="GRUB_CMDLINE_LINUX_DEFAULT"
-    echo "$grub_cmdline=\"\$$grub_cmdline crashkernel=128M\"" >/etc/grub.d/00-kdump
+    echo "$grub_cmdline=\"\$$grub_cmdline crashkernel=256M\"" >/etc/grub.d/00-kdump
     chmod +x /etc/grub.d/00-kdump
 
     if grub-mkconfig -o /boot/grub/grub.cfg 1>/dev/null; then
@@ -28,7 +28,7 @@ grub_setup_params() {
 
 rebind_setup_params() {
     if [ ! -e /boot/refind_linux.conf ]; then
-        die "rEFInd doesn't seem to be installed? Please set crashkernel=128M manually."
+        die "rEFInd doesn't seem to be installed? Please set crashkernel=256M manually."
     fi
 
     echo "rEFInd bootloader detected"
@@ -39,11 +39,11 @@ rebind_setup_params() {
 
 systemd_boot_setup_params() {
     if ! command -v sdboot-manage 2>/dev/null; then
-        die "systemd-boot-manager is not installed. Please set crashkernel=128M manually."
+        die "systemd-boot-manager is not installed. Please set crashkernel=256M manually."
     fi
 
     echo "systemd-boot bootloader detected"
-    echo 'LINUX_OPTIONS+=" crashkernel=128M"' > /etc/sdboot-manage.conf.d/10-kdump.conf
+    echo 'LINUX_OPTIONS+=" crashkernel=256M"' > /etc/sdboot-manage.conf.d/10-kdump.conf
 
     sdboot-manage update
 }
@@ -64,7 +64,7 @@ try_to_detect_bootloader() {
             fi
             ;;
         *)
-            die "Unknown type of bootloader. Please set crashkernel=128M manually."
+            die "Unknown type of bootloader. Please set crashkernel=256M manually."
             ;;
     esac
 
@@ -83,7 +83,7 @@ cleanup_files() {
     fi
 
     if [ -e /boot/refind_linux.conf ]; then
-        sed -i "s/crashkernel=128M//" /boot/refind_linux.conf &&
+        sed -i "s/crashkernel=256M//" /boot/refind_linux.conf &&
             echo "The config for rEFInd has been cleaned"
     fi
 }
