@@ -43,7 +43,7 @@ systemd_boot_setup_params() {
     fi
 
     echo "systemd-boot bootloader detected"
-    echo "APPENDED_LINUX_OPTIONS=\"crashkernel=128M\"" >/etc/sdboot-manage.conf.d/10-kdump.conf
+    echo 'LINUX_OPTIONS+=" crashkernel=128M"' > /etc/sdboot-manage.conf.d/10-kdump.conf
 
     sdboot-manage update
 }
