@@ -97,10 +97,9 @@ load_kexec() {
         exit 1
     fi
 
-    initrd="$(grep -Po 'initrd=\\\K([^ ]*)' /proc/cmdline)"
     kernelname="$(cat /lib/modules/"$(uname -r)"/pkgbase)"
     vmlinux="/boot/vmlinuz-${kernelname}"
-    initramfs="/boot/${initrd}"
+    initramfs="/boot/initramfs-${kernelname}.img"
 
     if [ ! -e "$vmlinux" ]; then
         die "vmlinuz for current kernel not found. Do you have /boot unmounted?"
