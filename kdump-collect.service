@@ -1,0 +1,10 @@
+[Unit]
+Description=Collect kernel crash dump and log
+ConditionPathExists=/proc/vmcore
+DefaultDependencies=no
+PartOf=emergency.target
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/kdump collect
+ExecStopPost=/usr/bin/reboot

@@ -136,7 +136,7 @@ load_kexec() {
     # systemd and the kdump service, it should be suitable for creating dumps
     # inside initramfs and will not cause panic at boot time.
     if kexec -p "$vmlinux" --initrd="$initramfs" --reuse-cmdline \
-        --append="fsck.mode=force fsck.repair=yes nr_cpus=1 irqpoll reset_devices"
+        --append="fsck.mode=force fsck.repair=yes nr_cpus=1 irqpoll reset_devices systemd.unit=emergency.target"
     then
         echo "The fallback kernel has been successfully loaded"
     else
@@ -152,6 +152,16 @@ unload_kexec() {
     else
         echo "The fallback kernel was not loaded, nothing to do"
     fi
+}
+
+collect() {
+    if [ ! -e /proc/vmcore ]; then
+        die "Failed to collect kernel dump, /proc/vmcore is not exist"
+    fi
+
+    umask 0077
+    makedumpfile --dump-dmesg /proc/vmcore "/var/crash/crashdump-$(date +'%F-%T').log"
+    makedumpfile -l -d 31 /proc/vmcore "/var/crash/crashdump-$(date +'%F-%T')"
 }
 
 usage() {
@@ -176,6 +186,9 @@ case "$1" in
         ;;
     unload)
         unload_kexec
+        ;;
+    collect)
+        collect
         ;;
     cleanup)
         cleanup_files
