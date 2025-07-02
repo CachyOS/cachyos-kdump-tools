@@ -102,18 +102,19 @@ try_to_detect_bootloader() {
 
 cleanup_files() {
     if [ -e /etc/grub.d/00-kdump ]; then
-        rm -f /etc/grub.d/00-kdump &&
-            echo "The config for GRUB has been cleaned"
+        rm /etc/grub.d/00-kdump && echo "Config for GRUB has been removed"
     fi
 
     if [ -e /etc/sdboot-manage.conf.d/10-kdump.conf ]; then
-        rm -f /etc/sdboot-manage.conf.d/10-kdump.conf &&
-            echo "The config for systemd-boot has been cleaned"
+        rm /etc/sdboot-manage.conf.d/10-kdump.conf && echo "Config for systemd-boot has been removed"
     fi
 
     if [ -e /boot/refind_linux.conf ]; then
-        sed -i "s/crashkernel=256M//" /boot/refind_linux.conf &&
-            echo "The config for rEFInd has been cleaned"
+        sed -i "s/crashkernel=256M//" /boot/refind_linux.conf && echo "crashkernel paramater in rEFInd config has been removed"
+    fi
+
+    if [ -e /etc/limine-entry-tool.d/10-kdump.conf ]; then
+        rm /etc/limine-entry-tool.d/10-kdump.conf && echo "Config for Limine has been removed"
     fi
 }
 
