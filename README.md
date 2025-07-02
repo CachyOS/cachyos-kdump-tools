@@ -25,9 +25,9 @@ manually or with ``sudo kdump setup`` command.
 
 This works on top of the kexec-tools, which perform loading of a "fallback"
 kernel in case of panic. It is necessary because all I/O operations performed
-by the primary kernel cannot be performed safely after an error occurs. To load a
-fallback kernel, you must first reserve area in your system's memory using the
-``crashkernel`` kernel parameter.
+by the primary kernel cannot be performed safely after an error occurs. To load
+a fallback kernel, you must first reserve area in your system's memory using
+the ``crashkernel`` kernel parameter.
 
 Once kernel panic occurs and fallback kernel is booted, your system enters the
 emergency stage, in which kdump-collected service is started, extracting the
@@ -58,3 +58,9 @@ unstripped kernel image and modules with ``linux-cachyos-dbg`` package.
 This tool will not help if your file system has been damaged or if panic occurs
 early in the system boot process. Although the first case is partially handled
 by forcing fsck to be used during boot, this does not provide any guarantees.
+
+## Similar projects
+
+- https://github.com/adam900710/simple-kdump
+
+- https://gitlab.freedesktop.org/gpiccoli/kdumpst
