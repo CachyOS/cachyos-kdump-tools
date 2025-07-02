@@ -48,6 +48,16 @@ systemd_boot_setup_params() {
     sdboot-manage update
 }
 
+limine_setup_params() {
+    if ! command -v limine-update 2>/dev/null; then
+        die "limine-entry-tool is not installed. Please set crashkernel=256M manually."
+    fi
+
+    echo "Limie bootloader detected"
+    echo 'KERNEL_CMDLINE[default]+="crashkernel=256M"' > /etc/limine-entry-tool.d/10-kdump.conf
+    limine-update
+}
+
 try_to_detect_bootloader() {
     bootloader_type="$(($(</proc/sys/kernel/bootloader_type) >> 4))"
 
@@ -62,6 +72,9 @@ try_to_detect_bootloader() {
                 # Assume that refind is used if systemd-boot is not installed
                 rebind_setup_params
             fi
+            ;;
+        $((0x0F))) # Limine bootloader
+            limine_setup_params
             ;;
         *)
             die "Unknown type of bootloader. Please set crashkernel=256M manually."
@@ -89,7 +102,7 @@ cleanup_files() {
 }
 
 load_kexec() {
-    crashkernel="$(cat /sys/kernel/kexec_crash_size)"
+    local crashkernel="$(cat /sys/kernel/kexec_crash_size)"
 
     if [ ! "$crashkernel" -gt 0 ]; then
         echo "The crashkernel parameter is not set." >&2
@@ -97,9 +110,15 @@ load_kexec() {
         exit 1
     fi
 
-    kernelname="$(cat /lib/modules/"$(uname -r)"/pkgbase)"
-    vmlinux="/boot/vmlinuz-${kernelname}"
-    initramfs="/boot/initramfs-${kernelname}.img"
+    local kernelname="$(cat /lib/modules/"$(uname -r)"/pkgbase)"
+    local vmlinux="/boot/vmlinuz-${kernelname}"
+    local initramfs="/boot/initramfs-${kernelname}.img"
+
+    if command -v limine-mkinitcpio &>/dev/null; then
+        local machine_id="$(cat /etc/machine-id)"
+        vmlinux="/boot/${machine_id}/${kernelname}/vmlinuz-${kernelname}"
+        initramfs="/boot/${machine_id}/${kernelname}/initramfs-${kernelname}"
+    fi
 
     if [ ! -e "$vmlinux" ]; then
         die "vmlinuz for current kernel not found. Do you have /boot unmounted?"
