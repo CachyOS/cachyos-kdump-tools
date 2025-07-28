@@ -156,7 +156,7 @@ load_kexec() {
     cmdline="${cmdline//quiet/}"
     cmdline="${cmdline//crashkernel=256M/}"
     if kexec -p "$vmlinux" --initrd="$initramfs" \
-        --command-line="$cmdline loglevel=5 fsck.mode=force fsck.repair=yes nr_cpus=1 irqpoll reset_devices systemd.unit=emergency.target"
+        --command-line="$cmdline loglevel=5 fsck.mode=force fsck.repair=yes nr_cpus=1 irqpoll reset_devices systemd.unit=emergency.target nomodeset"
     then
         echo "The fallback kernel has been successfully loaded"
     else
