@@ -193,7 +193,7 @@ Options:
     setup     Attempt to automatically set the crashkernel parameter
     load      Load a fallback kernel for panic via kexec
     unload    Unload fallback kernel from reserved area in memory
-    clean     Clear config files created by setup
+    cleanup   Clear config files created by setup
 EOF
 }
 
