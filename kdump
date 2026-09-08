@@ -133,8 +133,10 @@ load_kexec() {
 
     if command -v limine-mkinitcpio &>/dev/null; then
         local machine_id="$(cat /etc/machine-id)"
-        vmlinux="/boot/${machine_id}/${kernelname}/vmlinuz-${kernelname}"
-        initramfs="/boot/${machine_id}/${kernelname}/initramfs-${kernelname}"
+        # limine-mkinitcpio deploys plain "vmlinuz"/"initramfs" into
+        # /boot/<machine-id>/<pkgbase>/ (no "-<pkgbase>" filename suffix)
+        vmlinux="/boot/${machine_id}/${kernelname}/vmlinuz"
+        initramfs="/boot/${machine_id}/${kernelname}/initramfs"
     fi
 
     if [ ! -e "$vmlinux" ]; then
