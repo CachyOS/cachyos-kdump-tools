@@ -136,10 +136,10 @@ load_kexec() {
         # limine-mkinitcpio-hook >= 1.37 deploys plain "vmlinuz"/"initramfs"
         # into /boot/<machine-id>/<pkgbase>/ (older versions used
         # "vmlinuz-<pkgbase>" / "initramfs-<pkgbase>"). Support both layouts.
-        vmlinux="/boot/${machine_id}/${kernelname}/vmlinuz-${kernelname}"
-        [ -e "$vmlinux" ] || vmlinux="/boot/${machine_id}/${kernelname}/vmlinuz"
-        initramfs="/boot/${machine_id}/${kernelname}/initramfs-${kernelname}"
-        [ -e "$initramfs" ] || initramfs="/boot/${machine_id}/${kernelname}/initramfs"
+        vmlinux="/boot/${machine_id}/${kernelname}/vmlinuz"
+        [ -e "$vmlinux" ] || vmlinux="/boot/${machine_id}/${kernelname}/vmlinuz-${kernelname}"
+        initramfs="/boot/${machine_id}/${kernelname}/initramfs"
+        [ -e "$initramfs" ] || initramfs="/boot/${machine_id}/${kernelname}/initramfs-${kernelname}"
     fi
 
     if [ ! -e "$vmlinux" ]; then
